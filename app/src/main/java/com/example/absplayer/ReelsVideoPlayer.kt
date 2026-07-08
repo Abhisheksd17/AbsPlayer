@@ -9,13 +9,16 @@ import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
@@ -53,7 +56,6 @@ fun ReelVideoPlayer(
         state.startProgressLoop(scope)
     }
 
-    // auto-hide controls after 2.5s
     LaunchedEffect(controlsVisibleUntil) {
         if (controlsVisibleUntil > 0L) {
             delay(2500L)
@@ -63,10 +65,10 @@ fun ReelVideoPlayer(
         }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            // Tap for Play/Pause
+            .background(Color.Black)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
@@ -76,12 +78,10 @@ fun ReelVideoPlayer(
                     }
                 )
             }
-            // Long Press on Right Side for 2x Speed
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown()
                     
-                    // Only trigger on the right 50% of the screen
                     if (down.position.x > (size.width / 2f)) {
                         val longPress = awaitLongPressOrCancellation(down.id)
                         if (longPress != null) {
@@ -93,18 +93,35 @@ fun ReelVideoPlayer(
                 }
             }
     ) {
+        val screenWidth = maxWidth
+        val screenHeight = maxHeight
+
+        val videoModifier = if (state.videoWidth > 0 && state.videoHeight > 0) {
+            var calculatedHeight = screenWidth * state.videoHeight / state.videoWidth
+            
+            if (calculatedHeight > screenHeight) {
+                calculatedHeight = screenHeight
+            }
+            
+            Modifier
+                .width(screenWidth)
+                .height(calculatedHeight)
+                .align(Alignment.Center)
+        } else {
+            Modifier.fillMaxSize()
+        }
+
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
                     useController = false
                     player = state.player
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                 }
             },
-            modifier = Modifier.fillMaxSize()
+            modifier = videoModifier
         )
 
-        // 2x Speed Overlay (IG Style)
         androidx.compose.animation.AnimatedVisibility(
             visible = state.playbackSpeed > 1f,
             enter = fadeIn(),

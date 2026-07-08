@@ -46,21 +46,17 @@ fun ReelsScreen(
             lifecycleOwner.lifecycle.removeObserver(observer)
             player.stop()
             prefetcher.cancelAll()
-            // Note: We don't release here if the activity is just rotating, 
-            // but for this simple setup we'll assume it's fine.
+
         }
     }
 
-    // Update media item and trigger prefetch when the page changes
     LaunchedEffect(pagerState.currentPage) {
         val reel = reels[pagerState.currentPage]
         
-        // 1. Update Player
         player.setMediaItem(MediaItem.fromUri(reel.videoUrl))
         player.prepare()
         player.play()
         
-        // 2. Trigger Prefetch for upcoming videos
         prefetcher.prefetch(reels, pagerState.currentPage)
     }
 
@@ -69,11 +65,9 @@ fun ReelsScreen(
         modifier = Modifier.fillMaxSize(),
         beyondViewportPageCount = 0 
     ) { page ->
-        // Only attach the player to the view of the current page
         if (page == pagerState.currentPage) {
             ReelVideoPlayer(state = reelState, modifier = Modifier.fillMaxSize())
         } else {
-            // Placeholder for non-active pages
             Box(modifier = Modifier.fillMaxSize())
         }
     }

@@ -5,9 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -20,11 +22,18 @@ class ReelPlayerState(val player: ExoPlayer) {
     var showControls by mutableStateOf(false)
     var playbackSpeed by mutableFloatStateOf(1f)
 
+    var videoWidth by mutableIntStateOf(0)
+    var videoHeight by mutableIntStateOf(0)
+
     init {
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(playing: Boolean) { isPlaying = playing }
             override fun onEvents(p: Player, events: Player.Events) {
                 duration = p.duration.coerceAtLeast(0L)
+            }
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                videoWidth = videoSize.width
+                videoHeight = videoSize.height
             }
         })
     }
