@@ -8,7 +8,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 
 @OptIn(UnstableApi::class)
-class ReelsPlayerPool(context: Context) {
+internal class ReelsPlayerPool(context: Context) {
     private val cacheDataSourceFactory = VideoCacheManager.getCacheDataSourceFactory(context)
     
     private val player = ExoPlayer.Builder(context)

@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReelSeekBar(state: ReelPlayerState) {
+internal fun ReelSeekBar(state: ReelPlayerState) {
     var isDragging by remember { mutableStateOf(false) }
     var dragPosition by remember { mutableFloatStateOf(0f) }
 
@@ -38,7 +38,7 @@ fun ReelSeekBar(state: ReelPlayerState) {
         },
         onValueChangeFinished = {
             val seekTo = (dragPosition * state.duration).toLong()
-            state.player.seekTo(seekTo)
+            state.seekTo(seekTo)
             isDragging = false
         },
         modifier = Modifier
@@ -51,7 +51,6 @@ fun ReelSeekBar(state: ReelPlayerState) {
             thumbColor = Color.White
         ),
         thumb = {
-            // Instagram hides the thumb until you touch it
             if (isDragging) {
                 Box(
                     Modifier

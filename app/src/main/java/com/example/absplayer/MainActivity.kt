@@ -9,38 +9,37 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.example.absplayer.ui.theme.AbsPlayerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 1. Initialize Library (Internalizes Cache, Pool, and Prefetcher)
+        AbsPlayer.init(this)
+        
         enableEdgeToEdge()
         setContent {
             AbsPlayerTheme {
-                val context = LocalContext.current
-                
-                // Initialize Pool and Prefetcher
-                val pool = remember { ReelsPlayerPool(context) }
-                val prefetcher = remember { ReelPrefetcher(context) }
-                
                 // Sample Reel Data
                 val reels = remember {
                     listOf(
                         ReelItem("1", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088557/gcxyj8d1unl99vcgizi5.mp4"),
                         ReelItem("2", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088591/hebl5ckcagftyqpsucr3.mp4"),
                         ReelItem("3", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088633/tis7dul2nuemzx9mxs5c.mp4"),
-                        ReelItem("4", "https://res.cloudinary.com/dujzbrfam/video/upload/v1783492771/a4odwbnxk07z1ot9znck.mp4"),
-                        ReelItem("5", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088661/t2gnenjxloyqlg92naqk.mp4")
+                        ReelItem("4", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088661/t2gnenjxloyqlg92naqk.mp4")
                     )
                 }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ReelsScreen(
+                    // 2. Use the simplified Library API
+                    AbsPlayer.ReelsViewer(
                         reels = reels,
-                        pool = pool,
-                        prefetcher = prefetcher
-                    )
+                        modifier = Modifier.padding(innerPadding)
+                    ) { reel, state ->
+                        // 3. Custom Overlay (Add Like, Share, etc. here)
+                        // All complex caching/playing logic is hidden inside ReelsViewer
+                    }
                 }
             }
         }

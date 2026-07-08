@@ -45,9 +45,10 @@ import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
 
 @Composable
-fun ReelVideoPlayer(
+internal fun ReelVideoPlayer(
     state: ReelPlayerState,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    overlay: @Composable () -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     var controlsVisibleUntil by remember { mutableLongStateOf(0L) }
@@ -56,6 +57,7 @@ fun ReelVideoPlayer(
         state.startProgressLoop(scope)
     }
 
+    // auto-hide controls after 2.5s
     LaunchedEffect(controlsVisibleUntil) {
         if (controlsVisibleUntil > 0L) {
             delay(2500L)
@@ -68,7 +70,7 @@ fun ReelVideoPlayer(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color.Black) // Background for letterboxing
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
@@ -78,10 +80,12 @@ fun ReelVideoPlayer(
                     }
                 )
             }
+            // Long Press on Right Side for 2x Speed
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown()
                     
+                    // Only trigger on the right 50% of the screen
                     if (down.position.x > (size.width / 2f)) {
                         val longPress = awaitLongPressOrCancellation(down.id)
                         if (longPress != null) {
@@ -96,9 +100,12 @@ fun ReelVideoPlayer(
         val screenWidth = maxWidth
         val screenHeight = maxHeight
 
+        // Calculate dynamic player dimensions to prevent cropping
         val videoModifier = if (state.videoWidth > 0 && state.videoHeight > 0) {
+            // Formula: height = screenWidth * videoHeight / videoWidth
             var calculatedHeight = screenWidth * state.videoHeight / state.videoWidth
             
+            // Cap to screen height
             if (calculatedHeight > screenHeight) {
                 calculatedHeight = screenHeight
             }
@@ -116,12 +123,14 @@ fun ReelVideoPlayer(
                 PlayerView(ctx).apply {
                     useController = false
                     player = state.player
+                    // Explicitly using FIT to avoid cropping
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                 }
             },
             modifier = videoModifier
         )
 
+        // 2x Speed Overlay (IG Style)
         androidx.compose.animation.AnimatedVisibility(
             visible = state.playbackSpeed > 1f,
             enter = fadeIn(),
@@ -169,6 +178,11 @@ fun ReelVideoPlayer(
             )
         }
 
+        // Custom Overlay provided by the user
+        Box(modifier = Modifier.fillMaxSize()) {
+            overlay()
+        }
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -176,7 +190,8 @@ fun ReelVideoPlayer(
                 .padding(bottom = 12.dp)
         ) {
             ReelSeekBar(state = state)
-            SpeedControlButton(state = state)
+            // SpeedControlButton is now optional or part of the library UI
+            // SpeedControlButton(state = state)
         }
     }
 }

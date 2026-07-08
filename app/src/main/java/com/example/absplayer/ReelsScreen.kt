@@ -15,58 +15,60 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
 
 @Composable
-fun ReelsScreen(
+internal fun ReelsScreen(
     reels: List<ReelItem>,
     pool: ReelsPlayerPool,
-    prefetcher: ReelPrefetcher
+    prefetcher: ReelPrefetcher,
+    modifier: Modifier = Modifier,
+    overlay: @Composable (ReelItem, ReelPlayerState) -> Unit = { _, _ -> }
 ) {
     val pagerState = rememberPagerState { reels.size }
     val lifecycleOwner = LocalLifecycleOwner.current
     
-    // Single player and state for the entire screen
     val player = remember { pool.acquire() }
     val reelState = remember(player) { ReelPlayerState(player) }
 
-    // Manage lifecycle (Pause on background, Release on destroy)
+    LaunchedEffect(reels) {
+        val mediaItems = reels.map { MediaItem.fromUri(it.videoUrl) }
+        player.setMediaItems(mediaItems)
+        player.prepare()
+    }
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_PAUSE -> {
-                    player.pause()
-                }
-                Lifecycle.Event.ON_RESUME -> {
-                    // Resume if needed
-                }
+                Lifecycle.Event.ON_PAUSE -> player.pause()
+                Lifecycle.Event.ON_RESUME -> player.play()
                 else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
             player.stop()
             prefetcher.cancelAll()
-
         }
     }
 
     LaunchedEffect(pagerState.currentPage) {
-        val reel = reels[pagerState.currentPage]
-        
-        player.setMediaItem(MediaItem.fromUri(reel.videoUrl))
-        player.prepare()
-        player.play()
-        
+        if (player.mediaItemCount > pagerState.currentPage) {
+            player.seekToDefaultPosition(pagerState.currentPage)
+            player.play()
+        }
         prefetcher.prefetch(reels, pagerState.currentPage)
     }
 
     VerticalPager(
         state = pagerState,
-        modifier = Modifier.fillMaxSize(),
-        beyondViewportPageCount = 0 
+        modifier = modifier.fillMaxSize(),
+        beyondViewportPageCount = 1 
     ) { page ->
         if (page == pagerState.currentPage) {
-            ReelVideoPlayer(state = reelState, modifier = Modifier.fillMaxSize())
+            ReelVideoPlayer(
+                state = reelState, 
+                modifier = Modifier.fillMaxSize(),
+                overlay = { overlay(reels[page], reelState) }
+            )
         } else {
             Box(modifier = Modifier.fillMaxSize())
         }
