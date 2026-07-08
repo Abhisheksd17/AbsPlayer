@@ -19,7 +19,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             AbsPlayerTheme {
                 val context = LocalContext.current
+                
+                // Initialize Pool and Prefetcher
                 val pool = remember { ReelsPlayerPool(context) }
+                val prefetcher = remember { ReelPrefetcher(context) }
                 
                 // Sample Reel Data
                 val reels = remember {
@@ -27,14 +30,16 @@ class MainActivity : ComponentActivity() {
                         ReelItem("1", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088557/gcxyj8d1unl99vcgizi5.mp4"),
                         ReelItem("2", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088591/hebl5ckcagftyqpsucr3.mp4"),
                         ReelItem("3", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088633/tis7dul2nuemzx9mxs5c.mp4"),
-                        ReelItem("4", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088661/t2gnenjxloyqlg92naqk.mp4")
+                        ReelItem("4", "https://res.cloudinary.com/dujzbrfam/video/upload/v1783492771/a4odwbnxk07z1ot9znck.mp4"),
+                        ReelItem("5", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088661/t2gnenjxloyqlg92naqk.mp4")
                     )
                 }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     ReelsScreen(
                         reels = reels,
-                        pool = pool
+                        pool = pool,
+                        prefetcher = prefetcher
                     )
                 }
             }
