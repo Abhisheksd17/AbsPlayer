@@ -57,7 +57,6 @@ internal fun ReelVideoPlayer(
         state.startProgressLoop(scope)
     }
 
-    // auto-hide controls after 2.5s
     LaunchedEffect(controlsVisibleUntil) {
         if (controlsVisibleUntil > 0L) {
             delay(2500L)
@@ -70,7 +69,7 @@ internal fun ReelVideoPlayer(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black) // Background for letterboxing
+            .background(Color.Black)
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = {
@@ -80,12 +79,9 @@ internal fun ReelVideoPlayer(
                     }
                 )
             }
-            // Long Press on Right Side for 2x Speed
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown()
-                    
-                    // Only trigger on the right 50% of the screen
                     if (down.position.x > (size.width / 2f)) {
                         val longPress = awaitLongPressOrCancellation(down.id)
                         if (longPress != null) {
@@ -100,12 +96,9 @@ internal fun ReelVideoPlayer(
         val screenWidth = maxWidth
         val screenHeight = maxHeight
 
-        // Calculate dynamic player dimensions to prevent cropping
         val videoModifier = if (state.videoWidth > 0 && state.videoHeight > 0) {
-            // Formula: height = screenWidth * videoHeight / videoWidth
             var calculatedHeight = screenWidth * state.videoHeight / state.videoWidth
             
-            // Cap to screen height
             if (calculatedHeight > screenHeight) {
                 calculatedHeight = screenHeight
             }
@@ -123,14 +116,12 @@ internal fun ReelVideoPlayer(
                 PlayerView(ctx).apply {
                     useController = false
                     player = state.player
-                    // Explicitly using FIT to avoid cropping
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                 }
             },
             modifier = videoModifier
         )
 
-        // 2x Speed Overlay (IG Style)
         androidx.compose.animation.AnimatedVisibility(
             visible = state.playbackSpeed > 1f,
             enter = fadeIn(),
@@ -163,7 +154,6 @@ internal fun ReelVideoPlayer(
             }
         }
 
-        // Center pause icon
         androidx.compose.animation.AnimatedVisibility(
             visible = !state.isPlaying,
             enter = fadeIn(),
@@ -178,7 +168,6 @@ internal fun ReelVideoPlayer(
             )
         }
 
-        // Custom Overlay provided by the user
         Box(modifier = Modifier.fillMaxSize()) {
             overlay()
         }
@@ -190,8 +179,7 @@ internal fun ReelVideoPlayer(
                 .padding(bottom = 12.dp)
         ) {
             ReelSeekBar(state = state)
-            // SpeedControlButton is now optional or part of the library UI
-            // SpeedControlButton(state = state)
+
         }
     }
 }
