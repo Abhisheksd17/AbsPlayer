@@ -15,13 +15,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // 1. Initialize Library (Internalizes Cache, Pool, and Prefetcher)
         AbsPlayer.init(this)
         
         enableEdgeToEdge()
         setContent {
             AbsPlayerTheme {
-                // Sample Reel Data
                 val reels = remember {
                     listOf(
                         ReelItem("1", "https://res.cloudinary.com/dujzbrfam/video/upload/v1774088557/gcxyj8d1unl99vcgizi5.mp4"),
@@ -32,13 +30,11 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // 2. Use the simplified Library API
                     AbsPlayer.ReelsViewer(
                         reels = reels,
                         modifier = Modifier.padding(innerPadding)
                     ) { reel, state ->
-                        // 3. Custom Overlay (Add Like, Share, etc. here)
-                        // All complex caching/playing logic is hidden inside ReelsViewer
+
                     }
                 }
             }

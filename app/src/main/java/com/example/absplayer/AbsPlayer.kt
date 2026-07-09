@@ -32,11 +32,7 @@ object AbsPlayer {
         return prefetcher ?: throw IllegalStateException("AbsPlayer must be initialized before use. Call AbsPlayer.init(context).")
     }
 
-    /**
-     * The primary Composable for displaying reels.
-     * @param overlay A lambda to draw custom UI on top of the video. 
-     * Provides the current [ReelItem] and the [ReelPlayerState] for playback control.
-     */
+
     @Composable
     fun ReelsViewer(
         reels: List<ReelItem>,
