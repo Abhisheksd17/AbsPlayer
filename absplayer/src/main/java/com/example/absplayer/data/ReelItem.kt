@@ -1,4 +1,4 @@
-package com.example.absplayer
+package com.example.absplayer.data
 
 /**
  * The standard data model for a reel.

@@ -1,5 +1,7 @@
 package com.example.absplayer
 
+import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -30,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -40,10 +41,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.example.absplayer.utility.ReelPlayerState
+import com.example.absplayer.utility.ReelSeekBar
 import kotlinx.coroutines.delay
 
+@OptIn(UnstableApi::class)
 @Composable
 internal fun ReelVideoPlayer(
     state: ReelPlayerState,
@@ -103,8 +108,7 @@ internal fun ReelVideoPlayer(
                 calculatedHeight = screenHeight
             }
             
-            Modifier
-                .width(screenWidth)
+            Modifier.width(screenWidth)
                 .height(calculatedHeight)
                 .align(Alignment.Center)
         } else {
@@ -122,7 +126,7 @@ internal fun ReelVideoPlayer(
             modifier = videoModifier
         )
 
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = state.playbackSpeed > 1f,
             enter = fadeIn(),
             exit = fadeOut(),
@@ -154,7 +158,7 @@ internal fun ReelVideoPlayer(
             }
         }
 
-        androidx.compose.animation.AnimatedVisibility(
+        AnimatedVisibility(
             visible = !state.isPlaying,
             enter = fadeIn(),
             exit = fadeOut(),
@@ -179,7 +183,6 @@ internal fun ReelVideoPlayer(
                 .padding(bottom = 12.dp)
         ) {
             ReelSeekBar(state = state)
-
         }
     }
 }

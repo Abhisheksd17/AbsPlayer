@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "AbsPlayer"
 include(":app")
- 
+include(":absplayer")

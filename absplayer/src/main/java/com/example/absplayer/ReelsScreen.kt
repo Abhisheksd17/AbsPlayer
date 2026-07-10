@@ -13,6 +13,10 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
+import com.example.absplayer.cache.ReelPrefetcher
+import com.example.absplayer.data.ReelItem
+import com.example.absplayer.cache.ReelsPlayerPool
+import com.example.absplayer.utility.ReelPlayerState
 
 @Composable
 internal fun ReelsScreen(
@@ -61,7 +65,7 @@ internal fun ReelsScreen(
     VerticalPager(
         state = pagerState,
         modifier = modifier.fillMaxSize(),
-        beyondViewportPageCount = 1 
+        beyondViewportPageCount = 1
     ) { page ->
         if (page == pagerState.currentPage) {
             ReelVideoPlayer(

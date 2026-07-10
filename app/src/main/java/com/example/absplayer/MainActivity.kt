@@ -1,4 +1,4 @@
-package com.example.absplayer
+package com.example.absplayer.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.example.absplayer.AbsPlayer
+import com.example.absplayer.data.ReelItem
 import com.example.absplayer.ui.theme.AbsPlayerTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // 1. Initialize the library from the :absplayer module
         AbsPlayer.init(this)
         
         enableEdgeToEdge()
@@ -30,11 +33,12 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    // 2. Use the ReelsViewer from the library
                     AbsPlayer.ReelsViewer(
                         reels = reels,
                         modifier = Modifier.padding(innerPadding)
                     ) { reel, state ->
-
+                        // Add your custom overlay UI here
                     }
                 }
             }

@@ -4,6 +4,10 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.example.absplayer.cache.ReelPrefetcher
+import com.example.absplayer.cache.ReelsPlayerPool
+import com.example.absplayer.data.ReelItem
+import com.example.absplayer.utility.ReelPlayerState
 
 /**
  * Entry point for the AbsPlayer library.
@@ -36,7 +40,7 @@ object AbsPlayer {
     @Composable
     fun ReelsViewer(
         reels: List<ReelItem>,
-        modifier: Modifier = Modifier,
+        modifier: Modifier = Modifier.Companion,
         overlay: @Composable (ReelItem, ReelPlayerState) -> Unit = { _, _ -> }
     ) {
         val currentPool = remember { getPool() }

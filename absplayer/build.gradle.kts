@@ -1,21 +1,18 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    `maven-publish`
 }
 
 android {
-    namespace = "com.example.absplayer.app"
+    namespace = "com.example.absplayer"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.absplayer.app"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -39,10 +36,20 @@ android {
     }
 }
 
-dependencies {
-    // Correctly reference the library module
-    implementation(project(":absplayer"))
+publishing {
+    publications {
+        register<MavenPublication>("release") {
+            afterEvaluate {
+                from(components["release"])
+            }
+            groupId = "com.github.AbhishekSDevadiga"
+            artifactId = "absplayer"
+            version = "1.0.0"
+        }
+    }
+}
 
+dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -51,6 +58,12 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    
-    debugImplementation(libs.androidx.compose.ui.tooling)
+
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
+    implementation(libs.media3.common)
+    implementation(libs.media3.datasource.okhttp)
+
+    implementation(libs.compose.foundation)
+    implementation(libs.coroutines.android)
 }

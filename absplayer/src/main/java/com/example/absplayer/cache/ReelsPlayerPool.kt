@@ -1,4 +1,4 @@
-package com.example.absplayer
+package com.example.absplayer.cache
 
 import android.content.Context
 import androidx.annotation.OptIn
@@ -10,7 +10,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 @OptIn(UnstableApi::class)
 internal class ReelsPlayerPool(context: Context) {
     private val cacheDataSourceFactory = VideoCacheManager.getCacheDataSourceFactory(context)
-    
+
     private val player = ExoPlayer.Builder(context)
         .setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory))
         .build().apply {
