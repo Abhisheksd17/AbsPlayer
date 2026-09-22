@@ -66,4 +66,5 @@ dependencies {
 
     implementation(libs.compose.foundation)
     implementation(libs.coroutines.android)
+    implementation("androidx.media3:media3-exoplayer-dash:1.4.1") // Add this line
 }

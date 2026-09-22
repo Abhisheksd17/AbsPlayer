@@ -1,91 +1,167 @@
-High-Performance Reels Library for Android
+# AbsPlayer
 
-AbsPlayer is a professional-grade Jetpack Compose library designed to deliver a seamless, Instagram-style vertical video "Reels" experience. It solves the common performance pitfalls of video lists—such as swiping latency, high memory usage, and excessive bandwidth consumption—using a sophisticated 3-layer caching and prefetching architecture.
+**AbsPlayer** is a high-performance, smooth short-video (Reel/TikTok/Shorts style) playback library and sample application for Android, built natively with **Jetpack Compose** and **AndroidX Media3 (ExoPlayer)**.
 
-🚀 Key Features
-•0-Latency Swiping: Uses a single-player "Playlist Mode" that keeps the video decoder warm, ensuring transitions between reels are instantaneous and glitch-free.
-•3-Layer Smart Caching:
-  ◦Layer 1 (Disk Cache): Persistent 500MB LRU (Least Recently Used) cache using Media3 SimpleCache.
-  ◦Layer 2 (Partial Prefetcher): Proactively downloads only the first 2MB of upcoming videos. This ensures instant startup while saving up to 90% of bandwidth on skipped reels.
-  ◦Layer 3 (Stream-While-Cache): Simultaneously streams and caches the current video in real-time.
-•Intelligent Aspect Ratio Handling: Automatically measures video dimensions and resizes the player to fit the screen perfectly. Unlike standard players, it never crops the video, respecting the original content's framing (IG-style).
-Advanced Interaction Model:
-  ◦2x Speed Toggle: Long-press on the right side of the screen to double playback speed.
-  ◦Custom UI Slot API: A declarative "Overlay" system that allows developers to plug in their own Like buttons, comments, and user profiles on top of the player.
-  ◦Smart Seek Bar: High-performance slider with visibility logic that mimics modern social media apps.
+---
 
+## Overview
 
-📦 Installation (JitPack)Add the JitPack repository to your settings.gradle.kts:
+AbsPlayer is designed to solve the common performance bottlenecks and flickering issues associated with vertical short-form video feeds in Android applications. By combining player pooling, intelligent background video prefetching, LRU caching, and seamless vertical paging, AbsPlayer delivers a butter-smooth 60fps scrolling and playback experience.
 
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url = uri("https://jitpack.io") }
+### Key Capabilities
+- **Instant Video Playback:** Eliminates buffer lag during vertical scrolling by pre-caching video streams and prefetching upcoming media.
+- **Composable First:** Fully built with Jetpack Compose (`VerticalPager`, custom seek bars, animated speed indicators, and gesture detectors).
+- **Modular Architecture:** Cleanly separated into a reusable library module (`:absplayer`) and a sample application module (`:app`).
+- **Flexible Overlays:** Allows developers to inject custom composable overlays (likes, comments, captions, action buttons) per reel item.
+
+---
+
+## Features
+
+- **Vertical Pager Feed:** Smooth vertical swiping powered by Compose `VerticalPager` with optimized `beyondViewportPageCount`.
+- **Advanced Caching & Prefetching:** 
+  - 500MB LRU video cache using Media3 `SimpleCache` and `StandaloneDatabaseProvider`.
+  - Proactive background prefetching (`ReelPrefetcher`) for upcoming reels (`currentIndex + 1` to `currentIndex + 3`).
+- **Variable Playback Speed:** Quick speed toggling (0.5x, 1.0x, 1.5x, 2.0x) via `SpeedControlButton` and a long-press gesture (hold right side of screen for 2x speed).
+- **Interactive Controls & Seekbar:** Custom gesture detection for tap-to-pause/play and a responsive drag-to-seek progress bar (`ReelSeekBar`).
+- **Lifecycle Awareness:** Automatically pauses playback when the app goes to the background (`ON_PAUSE`) and resumes when returning (`ON_RESUME`), cleaning up resources on disposal.
+
+---
+
+## Tech Stack
+
+- **Language:** Kotlin 2.0.21
+- **UI Toolkit:** Jetpack Compose (BOM 2024.09.00)
+- **Design System:** Material 3 (`1.3.1`), Compose Foundation (`1.7.5`)
+- **Video Player / Media:** AndroidX Media3 ExoPlayer (`1.4.1`) with HLS, DASH, UI, and OkHttp datasource extensions.
+- **Concurrency & Lifecycle:** Kotlin Coroutines (`1.9.0`), AndroidX Lifecycle (`2.9.4`)
+- **Build System:** Gradle with Kotlin DSL (`build.gradle.kts`) and Version Catalogs (`libs.versions.toml`).
+
+---
+
+## Architecture
+
+AbsPlayer follows a clean modular architecture separating core playback logic from UI consumption.
+
+```mermaid
+flowchart TD
+    subgraph App Module [:app]
+        MainActivity -->|Calls| AbsPlayerAPI[AbsPlayer.ReelsViewer]
+    end
+
+    subgraph Library Module [:absplayer]
+        AbsPlayerAPI --> ReelsScreen
+        ReelsScreen -->|Manages| ReelsPlayerPool
+        ReelsScreen -->|Triggers| ReelPrefetcher
+        ReelsScreen --> ReelVideoPlayer
+        ReelVideoPlayer --> ReelPlayerState
+        ReelsPlayerPool -->|ExoPlayer + CacheDataSource| VideoCacheManager
+        VideoCacheManager --> SimpleCache[(LRU Video Cache)]
+        ReelPrefetcher -->|CacheWriter| SimpleCache
+    end
+```
+
+### Data & Execution Flow
+1. **Initialization:** The host application calls `AbsPlayer.init(context)` in `Application` or `MainActivity` to initialize `ReelsPlayerPool` and `ReelPrefetcher`.
+2. **UI Binding:** `AbsPlayer.ReelsViewer` accepts a list of `ReelItem` data objects and an optional `@Composable` overlay lambda.
+3. **Paging & Playback:** `ReelsScreen` tracks the current page in `VerticalPager`, seeks the shared ExoPlayer instance, and initiates background prefetching for upcoming videos via `ReelPrefetcher`.
+4. **Caching:** Network requests flow through `VideoCacheManager` backed by Media3 `CacheDataSource` and `SimpleCache` for persistent offline/cached playback.
+
+---
+
+## Getting Started & Integration
+
+### 1. Add Dependency
+Include the `:absplayer` module in your project's `settings.gradle.kts` and add it as a dependency in your app module's `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation(project(":absplayer"))
+}
+```
+
+### 2. Initialize AbsPlayer
+Initialize the library in your `Application` class or main activity before rendering UI:
+
+```kotlin
+class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        AbsPlayer.init(this)
     }
-} 
+}
+```
 
+### 3. Implement ReelsViewer in Compose
+Use `AbsPlayer.ReelsViewer` in your Composable hierarchy:
 
-
-🛠️ How to Use
-1. Initialize the LibraryInitialize the player engine once in your Application class or MainActivity
- AbsPlayer.init(this)
-
-2. Basic Implementation
- Pass your list of ReelItem objects to the ReelsViewer Composable:
-
-val myReels = listOf(
+```kotlin
+val reels = listOf(
     ReelItem(id = "1", videoUrl = "https://example.com/video1.mp4"),
     ReelItem(id = "2", videoUrl = "https://example.com/video2.mp4")
 )
 
 AbsPlayer.ReelsViewer(
-    reels = myReels,
+    reels = reels,
     modifier = Modifier.fillMaxSize()
-)
-
-
-3. Advanced Usage (Custom Overlay)
-Use the Slot API to build your custom UI on top of the optimized player:
-
-AbsPlayer.ReelsViewer(reels = myReels) { reel, state ->
-    
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.align(Alignment.BottomEnd)) {
-            LikeButton(isLiked = reel.extraData["isLiked"] as Boolean)
-            ShareButton()
-        }
-        
-        if (!state.isPlaying) {
-            CustomPauseIcon()
-        }
+) { reel, playerState ->
+    // Add your custom overlay (e.g. user profile, like button, caption)
+    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text(text = "Reel ID: ${reel.id}", color = Color.White)
     }
 }
+```
 
+---
 
-🧩 Architecture Deep Dive
+## Project Structure
 
-The "Glitch-Free" LogicMost players stutter because they re-initialize the hardware decoder on every swipe. 
-AbsPlayer maintains a single ExoPlayer instance and loads the entire list as a internal playlist. 
-Swiping simply triggers a seekTo operation, which keeps the hardware decoder active and ready to render frames immediately.
-Bandwidth OptimizationInstead of downloading the entire 20MB-50MB video for every reel in the feed, our ReelPrefetcher only pulls the first 2MB of the next two videos.
-1.If the user skips, you only used 2MB.
-2.If the user stays, the player seamlessly transitions from the 2MB cache to a live stream for the remainder of the file.
+```text
+AbsPlayer/
+├── absplayer/                  # Reusable library module
+│   ├── src/main/java/com/example/absplayer/
+│   │   ├── AbsPlayer.kt        # Public entry point & singleton facade
+│   │   ├── ReelsScreen.kt      # VerticalPager & lifecycle management
+│   │   ├── ReelsVideoPlayer.kt # Video player surface & gesture detector
+│   │   ├── cache/
+│   │   │   ├── ReelPrefetcher.kt   # Background video prefetching
+│   │   │   ├── ReelsPlayerPool.kt  # ExoPlayer & buffer configuration
+│   │   │   └── VideoCacheManager.kt# SimpleCache & LRU cache setup
+│   │   ├── data/
+│   │   │   └── ReelItem.kt         # Data model for reels
+│   │   └── utility/
+│   │       ├── ReelPlayerState.kt  # State holder for playback parameters
+│   │       ├── ReelSeekBar.kt      # Drag-to-seek progress bar
+│   │       └── SpeedControlButton.kt# Variable speed selector
+└── app/                        # Sample application module
+    └── src/main/java/com/example/absplayer/app/
+        └── MainActivity.kt     # Sample usage with sample video URLs
+```
 
-Video MeasurementThe library uses onVideoSizeChanged listeners to calculate the exact screenWidth * videoHeight / videoWidth.
-It caps this height to the screen size, creating a centered "Letterbox" effect for landscape or square videos, ensuring no content is ever cut off by RESIZE_MODE_ZOOM.
+---
 
+## License
 
-🛠 Tech Stack•Jetpack Compose: For a modern, declarative UI.
-•Media3 (ExoPlayer): The gold standard for Android video playback.
-•Kotlin Coroutines: For non-blocking prefetch and progress tracking.
-•Maven Publish: Ready for distribution as an AAR library.
+```text
+MIT License
 
+Copyright (c) 2026 AbsPlayer Authors
 
-📄 LicenseThis 
-library is available under the MIT License. 
-Feel free to use it in your commercial projects!
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, reside, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-
-  
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT SUPERVISORS BE LIABLE FOR ANY EVENTANTS, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
